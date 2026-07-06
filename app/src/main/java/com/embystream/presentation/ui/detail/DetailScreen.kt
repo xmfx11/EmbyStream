@@ -78,20 +78,16 @@ fun DetailScreen(
     LaunchedEffect(itemId) {
         serverUrl = TokenManager.getServer() ?: ""
         userId = TokenManager.getUserId() ?: ""
+        val token = TokenManager.getToken() ?: ""
         
         if (serverUrl.isEmpty() || userId.isEmpty() || itemId.isEmpty()) {
             isLoading = false
             return@LaunchedEffect
         }
         
-        loadItemDetail()
-    }
-    
-    fun loadItemDetail() {
         isLoading = true
-        coroutineScope.launch {
             try {
-                val apiService = NetworkModule.createApiService(serverUrl)
+                val apiService = NetworkModule.createApiService(serverUrl, token)
                 val repository = EmbyRepository(apiService)
                 
                 val result = withContext(Dispatchers.IO) {
@@ -104,20 +100,13 @@ fun DetailScreen(
                 result.onSuccess { embyItem ->
                     item = embyItem
                 }.onFailure { error ->
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "加载失败: ${error.message}", Toast.LENGTH_SHORT).show()
-                    }
+                    Toast.makeText(context, "加载失败: ${error.message}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(context, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
-                withContext(Dispatchers.Main) {
-                    isLoading = false
-                }
+                isLoading = false
             }
-        }
     }
     
     fun playVideo() {

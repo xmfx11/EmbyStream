@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import com.embystream.R
 import com.embystream.data.local.TokenManager
 import com.embystream.data.repository.EmbyRepository
@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
-class PlayerActivity : AppCompatActivity() {
+class PlayerActivity : ComponentActivity() {
     private var player: ExoPlayer? = null
     private lateinit var surfaceView: SurfaceView
     
@@ -100,10 +100,8 @@ class PlayerActivity : AppCompatActivity() {
         val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(MediaItem.fromUri(videoUrl))
         
-        player = ExoPlayer.Builder(this)
-            .setMediaSource(mediaSource)
-            .build()
-        
+        player = ExoPlayer.Builder(this).build()
+        player?.setMediaSource(mediaSource)
         player?.setVideoSurfaceView(surfaceView)
         player?.prepare()
         player?.play()

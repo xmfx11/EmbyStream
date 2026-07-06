@@ -85,56 +85,45 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         serverUrl = TokenManager.getServer() ?: ""
         userId = TokenManager.getUserId() ?: ""
+        val token = TokenManager.getToken() ?: ""
         
         if (serverUrl.isEmpty() || userId.isEmpty()) {
             isLoading = false
             return@LaunchedEffect
         }
         
-        loadItems()
-    }
-    
-    fun loadItems() {
         isLoading = true
-        coroutineScope.launch {
-            try {
-                val apiService = NetworkModule.createApiService(serverUrl)
-                val repository = EmbyRepository(apiService)
-                
-                val result = withContext(Dispatchers.IO) {
-                    when {
-                        !filterTag.isNullOrEmpty() -> {
-                            repository.getItemsByTag(userId, filterTag)
-                        }
-                        !filterPersonId.isNullOrEmpty() -> {
-                            repository.getItemsByPerson(userId, filterPersonId)
-                        }
-                        else -> {
-                            if (parentId.isNullOrEmpty()) {
-                                repository.getViews(userId)
-                            } else {
-                                repository.getItems(userId, parentId)
-                            }
+        try {
+            val apiService = NetworkModule.createApiService(serverUrl, token)
+            val repository = EmbyRepository(apiService)
+            
+            val result = withContext(Dispatchers.IO) {
+                when {
+                    !filterTag.isNullOrEmpty() -> {
+                        repository.getItemsByTag(userId, filterTag)
+                    }
+                    !filterPersonId.isNullOrEmpty() -> {
+                        repository.getItemsByPerson(userId, filterPersonId)
+                    }
+                    else -> {
+                        if (parentId.isNullOrEmpty()) {
+                            repository.getViews(userId)
+                        } else {
+                            repository.getItems(userId, parentId)
                         }
                     }
-                }
-                
-                result.onSuccess { itemList ->
-                    items = itemList
-                }.onFailure { error ->
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "加载失败: ${error.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isLoading = false
                 }
             }
+            
+            result.onSuccess { itemList ->
+                items = itemList
+            }.onFailure { error ->
+                Toast.makeText(context, "加载失败: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
+        } finally {
+            isLoading = false
         }
     }
     

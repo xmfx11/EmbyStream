@@ -7,7 +7,7 @@ data class EmbyUser(
 
 data class LoginRequest(
     val Username: String,
-    val Password: String
+    val Pw: String
 )
 
 data class LoginResponse(

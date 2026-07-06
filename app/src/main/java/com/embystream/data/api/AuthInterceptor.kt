@@ -1,24 +1,26 @@
 package com.embystream.data.api
 
-import com.embystream.data.local.TokenManager
-import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 
 class AuthInterceptor : Interceptor {
+    companion object {
+        const val EMBY_AUTH = "MediaBrowser Client=\"EmbyStream\", Device=\"Android\", DeviceId=\"EmbyStream-Android-001\", Version=\"0.04\""
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        val token = runBlocking { TokenManager.getToken() }
-        
+
         val request = original.newBuilder()
+            .header("X-Emby-Authorization", EMBY_AUTH)
+            .header("Accept", "application/json")
             .apply {
-                if (!token.isNullOrEmpty()) {
-                    header("X-Emby-Token", token)
+                if (original.method == "POST" || original.method == "PUT") {
+                    header("Content-Type", "application/json")
                 }
             }
-            .header("Content-Type", "application/json")
             .build()
-        
+
         return chain.proceed(request)
     }
 }

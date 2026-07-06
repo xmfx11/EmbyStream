@@ -56,7 +56,7 @@ fun LoginScreen(
         if (!savedServer.isNullOrEmpty() && !savedToken.isNullOrEmpty()) {
             serverUrl = savedServer
             try {
-                val apiService = NetworkModule.createApiService(serverUrl)
+                val apiService = NetworkModule.createApiService(serverUrl, savedToken)
                 val repository = EmbyRepository(apiService)
                 val userId = TokenManager.getUserId() ?: return@LaunchedEffect
                 val result = repository.getViews(userId)
@@ -96,17 +96,28 @@ fun LoginScreen(
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "登录失败：无效的响应", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "登录失败：服务器返回无效的响应", Toast.LENGTH_LONG).show()
                         }
                     }
                 }.onFailure { error ->
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "登录失败: ${error.message}", Toast.LENGTH_SHORT).show()
+                        val errorMsg = when {
+                            error.message?.contains("Unable to resolve host") == true -> 
+                                "无法连接到服务器，请检查地址是否正确"
+                            error.message?.contains("connect timed out") == true -> 
+                                "连接超时，请检查服务器是否运行"
+                            error.message?.contains("401") == true -> 
+                                "用户名或密码错误"
+                            error.message?.contains("404") == true -> 
+                                "服务器地址错误或不是 Emby 服务器"
+                            else -> "登录失败: ${error.message}"
+                        }
+                        Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "连接错误: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             } finally {
                 withContext(Dispatchers.Main) {

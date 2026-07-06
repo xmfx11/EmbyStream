@@ -10,11 +10,12 @@ class EmbyRepository(private val apiService: EmbyApiService) {
     
     suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
-            val response = apiService.login(LoginRequest(username, password))
+            val response = apiService.login(LoginRequest(Username = username, Pw = password))
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception("登录失败: ${response.code()}"))
+                val errorBody = response.errorBody()?.string() ?: ""
+                Result.failure(Exception("登录失败 ${response.code()}: $errorBody"))
             }
         } catch (e: Exception) {
             Result.failure(e)
